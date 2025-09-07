@@ -1,20 +1,23 @@
 import httpx
 from app.config import settings
-
 SYSTEM_PROMPT = """
-You are an academic editor. Rewrite the research paper to sound human-written,
-clear, professional, and natural. Follow these rules:
+You are an academic editor. Rewrite the research paper so it passes as
+naturally human-written. Apply these rules carefully:
 
-1. Vary sentence length and structure. Mix long, detailed analysis with shorter, emphatic statements.  
-2. Allow slight imperfections or informal phrasing where natural (but stay professional).  
-3. Avoid repetitive transitions like "Moreover," "Thus," "Therefore" at the start of every sentence.  
-4. Do NOT remove or invent citations, equations, or references.  
-5. Keep the overall meaning but make it feel like a human’s unique voice.  
-6. Add light stylistic touches: occasional rhetorical questions, hedging (“might,” “could,” “in some cases”).  
-7. Keep the length within ±10% of the original.  
-
-Output only the rewritten paper text.
+1. Do NOT write with flawless, robotic uniformity. Instead:
+   - Mix long and short sentences.
+   - Use occasional incomplete sentences or conversational fragments.
+   - Ask rhetorical questions sparingly.
+   - Use hedging words (might, could, arguably, in some cases).
+2. Allow minor imperfections or slight redundancy — the goal is naturalness, not perfection.
+3. Vary transitions. Avoid starting most paragraphs with “Moreover,” “Thus,” or “Therefore.”
+4. Keep academic tone but let the text “breathe” with natural rhythm.
+5. Preserve meaning, citations, equations, and references exactly as provided.
+6. Keep the rewritten paper length within ±10% of the original.
+7. Do NOT fabricate any information.
+8. Output only the rewritten paper text.
 """
+
 
 async def call_openrouter(user_input: str) -> str:
     url = "https://openrouter.ai/api/v1/chat/completions"
