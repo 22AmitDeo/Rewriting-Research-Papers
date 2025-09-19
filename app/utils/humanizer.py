@@ -1,160 +1,108 @@
 import random
 import re
-from typing import List, Dict
+from typing import List
 
 def humanize_text(text: str, strength: str = "strong") -> str:
     """
-    Post-process AI output to significantly reduce AI-detection likelihood.
-    Adds imperfections, varied phrasing, and natural human writing patterns.
-    strength: "mild", "medium", "strong", "extreme"
+    Post-process AI output to reduce AI-detection likelihood by injecting
+    real academic writing patterns observed in human papers.
     """
-    
+
     multipliers = {
         "mild": 0.02,
         "medium": 0.05,
         "strong": 0.08,
-        "extreme": 0.12  # Maximum humanization
+        "extreme": 0.12
     }
     chance = multipliers.get(strength, 0.08)
 
-    # Expanded hedging and conversational phrases
+    # Academic hedges (tentative phrasing humans use)
     hedges = [
-        "to some extent", "arguably", "it is worth noting", "in practice", 
-        "in certain cases", "from another perspective", "at times", 
-        "in reality", "sometimes overlooked", "generally speaking",
-        "for the most part", "in many instances", "under certain circumstances",
-        "it could be argued that", "from my perspective", "based on experience",
-        "in my observation", "what I've found is", "interestingly enough"
+        "it appears that", "this may suggest", "our findings indicate",
+        "could imply", "to some extent", "in certain contexts",
+        "this could be interpreted as", "may point toward"
     ]
 
-    # Expanded synonyms with more natural variations
-    synonyms = {
-        "important": ["crucial", "significant", "vital", "paramount", "essential", "key"],
-        "many": ["numerous", "several", "countless", "a multitude of", "a variety of"],
-        "show": ["demonstrate", "reveal", "illustrate", "exhibit", "display", "suggest"],
-        "make": ["create", "formulate", "develop", "construct", "produce", "generate"],
-        "need": ["require", "demand", "call for", "necessitate", "compel"],
-        "impact": ["effect", "influence", "consequence", "repercussion", "ramification"],
-        "change": ["shift", "transition", "transformation", "alteration", "modification"],
-        "however": ["nevertheless", "nonetheless", "that said", "on the other hand"],
-        "therefore": ["thus", "consequently", "as a result", "hence", "accordingly"],
-        "additionally": ["furthermore", "moreover", "also", "what's more", "besides"],
-    }
+    # Human academic transition signals
+    transitions = [
+        "Furthermore,", "Moreover,", "In addition,", "However,",
+        "On the other hand,", "Interestingly,", "Notably,", "At the same time,"
+    ]
 
-    # Common AI phrases to target for replacement
-    ai_phrases = {
-        "it is important to": ["crucially, we should", "a key consideration is", "we must"],
-        "in conclusion": ["to sum up", "ultimately", "in summary", "finally"],
-        "this suggests that": ["this implies", "this indicates", "this points to"],
-        "research has shown": ["studies demonstrate", "evidence reveals", "findings indicate"],
-        "it can be seen that": ["we observe that", "it becomes apparent", "one can see"],
-        "as previously mentioned": ["as noted earlier", "building on earlier points", "returning to"],
-    }
+    # Academic clichés
+    academic_phrases = [
+        "In this study,", "The results indicate that",
+        "Our findings suggest that", "This research demonstrates",
+        "Overall, the evidence reveals", "The analysis shows"
+    ]
 
-    # --- Phase 1: AI phrase replacement ---
-    for ai_phrase, replacements in ai_phrases.items():
-        if ai_phrase in text.lower():
-            if random.random() < chance * 1.5:
-                replacement = random.choice(replacements)
-                text = re.sub(re.escape(ai_phrase), replacement, text, flags=re.IGNORECASE)
+    # Contribution & implication signals
+    contribution_phrases = [
+        "This study makes several contributions to the literature.",
+        "The findings have both theoretical and practical implications.",
+        "From a practical perspective, these results may inform policymakers.",
+        "The study adds to ongoing debates within the field."
+    ]
 
-    # --- Phase 2: Synonym replacements with context awareness ---
-    words = text.split()
-    for i, word in enumerate(words):
-        clean_word = word.lower().strip('.,!?;:"')
-        if clean_word in synonyms and random.random() < chance * 2:
-            replacement = random.choice(synonyms[clean_word])
-            # Preserve original capitalization
-            if word[0].isupper():
-                replacement = replacement.capitalize()
-            words[i] = replacement + word[len(clean_word):]
-    text = " ".join(words)
+    # Limitations & future research signals
+    limitations_phrases = [
+        "This study is not without limitations.",
+        "A key limitation involves the sample size.",
+        "Future research could expand on these findings.",
+        "Subsequent studies may adopt alternative methodologies."
+    ]
 
-    # --- Phase 3: Strategic hedge injections ---
+    # --- Phase 1: Inject academic clichés ---
+    sentences = re.split(r'(?<=[.!?]) +', text)
+    if sentences and random.random() < chance * 1.5:
+        insert_pos = random.randint(0, min(3, len(sentences)-1))
+        sentences.insert(insert_pos, random.choice(academic_phrases))
+    text = " ".join(sentences)
+
+    # --- Phase 2: Hedge injection ---
     sentences = re.split(r'(?<=[.!?]) +', text)
     new_sentences = []
-    
     for sentence in sentences:
         words = sentence.split()
-        if len(words) > 5 and random.random() < chance:
-            insert_pos = random.randint(1, len(words) - 2)
-            hedge = random.choice(hedges)
-            words.insert(insert_pos, hedge + ",")
+        if len(words) > 7 and random.random() < chance:
+            insert_pos = random.randint(2, len(words) - 2)
+            words.insert(insert_pos, random.choice(hedges) + ",")
         new_sentences.append(" ".join(words))
-    
     text = " ".join(new_sentences)
 
-    # --- Phase 4: Advanced sentence restructuring ---
+    # --- Phase 3: Transition starters ---
+    sentences = re.split(r'(?<=[.!?]) +', text)
+    for i in range(1, len(sentences)):
+        if random.random() < chance and not sentences[i].startswith(tuple(transitions)):
+            sentences[i] = random.choice(transitions) + " " + sentences[i].lstrip()
+    text = " ".join(sentences)
+
+    # --- Phase 4: Contribution & implications ---
+    if random.random() < chance:
+        text += " " + random.choice(contribution_phrases)
+
+    # --- Phase 5: Limitations & future research ---
+    if random.random() < chance:
+        text += " " + random.choice(limitations_phrases)
+
+    # --- Phase 6: Sentence rhythm tweaks ---
     sentences = re.split(r'(?<=[.!?]) +', text)
     new_sentences = []
-    
-    i = 0
-    while i < len(sentences):
-        current = sentences[i].strip()
-        if not current:
-            i += 1
+    for s in sentences:
+        s = s.strip()
+        if not s:
             continue
-            
-        # Split very long sentences
-        if len(current.split()) > 20 and random.random() < chance * 2:
-            parts = re.split(r'[,;:]', current)
-            if len(parts) > 1:
-                current = parts[0] + "." + " ".join(parts[1:])
-        
-        # Merge short related sentences
-        if (i < len(sentences) - 1 and len(current.split()) < 8 and 
-            random.random() < chance and len(new_sentences) > 0):
-            next_sent = sentences[i + 1].strip()
-            if next_sent and len(next_sent.split()) < 15:
-                connector = random.choice(["and", "while", "though", "although"])
-                new_sentences[-1] = new_sentences[-1] + f" {connector} " + next_sent.lower()
-                i += 2
-                continue
-        
-        new_sentences.append(current)
-        i += 1
-
-    text = ". ".join(new_sentences)
-
-    # --- Phase 5: Add natural human imperfections ---
-    if random.random() < chance:
-        # Add a conversational aside
-        asides = [
-            "This is something I've personally observed in my work.",
-            "From my experience, this tends to hold true.",
-            "I've found this approach particularly effective.",
-            "This perspective has served me well in practice.",
-            "In my view, this deserves more attention."
-        ]
-        text += " " + random.choice(asides)
-
-    if random.random() < chance / 2:
-        # Add a minor grammatical "error" that humans make
-        errors = [
-            "Their are multiple perspectives on this.",
-            "This effects how we approach the problem.",
-            "We should of considered this earlier.",
-            "Its important to note these limitations.",
-            "This principle applies irregardless of context."
-        ]
-        if random.random() < 0.3:  # Only add errors occasionally
-            text = text + " " + random.choice(errors)
-
-    # --- Phase 6: Final polishing ---
-    # Ensure proper capitalization after sentence breaks
-    text = re.sub(r'\. ([a-z])', lambda match: '. ' + match.group(1).upper(), text)
-    
-    # Add varied sentence starters
-    starters = ["Moreover,", "Additionally,", "Interestingly,", "Surprisingly,", "Notably,"]
-    if random.random() < chance and len(text.split('. ')) > 2:
-        sentences = text.split('. ')
-        if len(sentences) > 1:
-            sentences[1] = random.choice(starters) + " " + sentences[1].lower()
-            text = '. '.join(sentences)
+        # Occasionally break into fragments
+        if len(s.split()) > 18 and random.random() < chance:
+            cut = len(s.split()) // 2
+            words = s.split()
+            s = " ".join(words[:cut]) + ". " + " ".join(words[cut:])
+        new_sentences.append(s)
+    text = " ".join(new_sentences)
 
     return text
 
-# Additional utility function for batch processing
+
 def humanize_batch(texts: List[str], strength: str = "strong") -> List[str]:
-    """Humanize multiple texts with consistent settings"""
+    """Apply humanization to multiple texts"""
     return [humanize_text(text, strength) for text in texts]
